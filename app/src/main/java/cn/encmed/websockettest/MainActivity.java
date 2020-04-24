@@ -13,7 +13,9 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
-    WebSocketService.LocalBinder webSocketService;
+    WebSocketService webSocketService;
+    TextView tvMessage;
+    EditText etValue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,67 +23,16 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         bindService(new Intent(this, WebSocketService.class), serviceConnection, BIND_AUTO_CREATE);
 
-        Button btnConnect = findViewById(R.id.btn_connect);
         Button btnClose = findViewById(R.id.btn_close);
         Button btnSend = findViewById(R.id.btn_send);
-        final EditText etValue = findViewById(R.id.et_value);
-        final TextView tvMessage = findViewById(R.id.tv_message);
+        etValue = findViewById(R.id.et_value);
+        tvMessage = findViewById(R.id.tv_message);
 
-        btnConnect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (webSocketService != null) {
-                    webSocketService.getWebSocketClient().connect("ws://121.40.165.18:8800");
-
-                    webSocketService.getWebSocketClient().setWebSocketCallback(new WebSocketClient.WebSocketCallback() {
-                        @Override
-                        public void onMessage(final String text) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    tvMessage.setText(text);
-                                }
-                            });
-                        }
-
-                        @Override
-                        public void onOpen() {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    tvMessage.setText("opend");
-                                }
-                            });
-                        }
-
-                        @Override
-                        public void onClose() {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    tvMessage.setText("closed");
-                                }
-                            });
-                        }
-
-                        @Override
-                        public void onFail(final String message) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    tvMessage.setText(message);
-                                }
-                            });
-                        }
-                    });
-                }
-            }
-        });
         btnClose.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (webSocketService != null) {
-                    webSocketService.getWebSocketClient().close();
+                    webSocketService.close();
                 }
             }
         });
@@ -89,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (webSocketService != null) {
-                    webSocketService.getWebSocketClient().send(etValue.getText().toString().trim());
+                    webSocketService.send(etValue.getText().toString().trim());
                 }
             }
         });
@@ -104,12 +55,45 @@ public class MainActivity extends AppCompatActivity {
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            webSocketService = ((WebSocketService.LocalBinder) service);
+            webSocketService = ((WebSocketService.LocalBinder) service).getService();
+            webSocketService.setWebSocketCallback(webSocketCallback);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             webSocketService = null;
+        }
+    };
+
+    private WebSocketService.WebSocketCallback webSocketCallback = new WebSocketService.WebSocketCallback() {
+        @Override
+        public void onMessage(final String text) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    tvMessage.setText(text);
+                }
+            });
+        }
+
+        @Override
+        public void onOpen() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    tvMessage.setText("onOpen");
+                }
+            });
+        }
+
+        @Override
+        public void onClosed() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    tvMessage.setText("onClosed");
+                }
+            });
         }
     };
 }
