@@ -13,7 +13,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
-    WebSocketService webSocketService;
+    SocketIOService webSocketService;
     TextView tvMessage;
     EditText etValue;
 
@@ -21,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        bindService(new Intent(this, WebSocketService.class), serviceConnection, BIND_AUTO_CREATE);
+        bindService(new Intent(this, SocketIOService.class), serviceConnection, BIND_AUTO_CREATE);
 
         Button btnClose = findViewById(R.id.btn_close);
         Button btnSend = findViewById(R.id.btn_send);
@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (webSocketService != null) {
-                    webSocketService.send(etValue.getText().toString().trim());
+                    webSocketService.send("event", etValue.getText().toString().trim());
                 }
             }
         });
@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            webSocketService = ((WebSocketService.LocalBinder) service).getService();
+            webSocketService = ((SocketIOService.LocalBinder) service).getService();
             webSocketService.setWebSocketCallback(webSocketCallback);
         }
 
@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private WebSocketService.WebSocketCallback webSocketCallback = new WebSocketService.WebSocketCallback() {
+    private SocketIOService.WebSocketCallback webSocketCallback = new SocketIOService.WebSocketCallback() {
         @Override
         public void onMessage(final String text) {
             runOnUiThread(new Runnable() {
