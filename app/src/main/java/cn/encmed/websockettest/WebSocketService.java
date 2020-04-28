@@ -9,8 +9,6 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import org.jetbrains.annotations.NotNull;
-
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -27,6 +25,7 @@ public class WebSocketService extends Service {
     private WebSocket webSocket;
     private WebSocketCallback webSocketCallback;
     private int reconnectTimeout = 5000;
+    private boolean connected = false;
 
     private Handler handler = new Handler();
 
@@ -88,7 +87,10 @@ public class WebSocketService extends Service {
             @Override
             public void run() {
                 Log.d(TAG, "reconnect...");
-                connect();
+                if (!connected) {
+                    connect();
+                    handler.postDelayed(this, reconnectTimeout);
+                }
             }
         }, reconnectTimeout);
     }
@@ -101,6 +103,7 @@ public class WebSocketService extends Service {
             if (webSocketCallback != null) {
                 webSocketCallback.onOpen();
             }
+            connected = true;
         }
 
         @Override
@@ -117,12 +120,8 @@ public class WebSocketService extends Service {
             if (webSocketCallback != null) {
                 webSocketCallback.onClosed();
             }
+            connected = false;
             reconnect();
-        }
-
-        @Override
-        public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
-            Log.d(TAG, "onClosing " + reason);
         }
 
         /**
@@ -133,6 +132,7 @@ public class WebSocketService extends Service {
         @Override
         public void onFailure(WebSocket webSocket, Throwable t, Response response) {
             Log.d(TAG, "onFailure " + t.getMessage());
+            connected = false;
             reconnect();
         }
     }
