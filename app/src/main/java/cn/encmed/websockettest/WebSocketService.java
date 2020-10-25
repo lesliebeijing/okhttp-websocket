@@ -89,7 +89,6 @@ public class WebSocketService extends Service {
                 Log.d(TAG, "reconnect...");
                 if (!connected) {
                     connect();
-                    handler.postDelayed(this, reconnectTimeout);
                 }
             }
         }, reconnectTimeout);
